@@ -1,0 +1,506 @@
+---
+title: "Case_Studies_In_Industrial_Modelling_Project"
+author: "Jayaram Gokulan"
+date: "2/27/2020"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+library(statnet)
+load(url("https://acaimo.github.io/Bergm/network_data/gangs.Rdata"))
+y <- gangs
+```
+
+# DESCRIPTIVES
+
+## A. Density of Network
+
+
+```{r Density of Network, echo=FALSE}
+summary(gangs ~ density)
+```
+
+COMMENT:
+
+The directed network, gangs, has a density of 0.01650837. This density is towards a lower value(<0.5) indicating the sparse nature of the network.
+
+This is alternatively calculated using:
+
+A. The total no of edges in the network given below :
+```{r edges of Network, echo=FALSE}
+summary(gangs ~ edges)
+```
+
+B. The total no of vertices in the network given below:
+```{r Vertices of Network, echo=FALSE}
+network.size(gangs)
+```
+
+
+The density is then = (Total No of Edges) / (Total No of Vertices)*(Total No of Vertices-1)
+                    
+                    = 73/(67 x 66)
+                    
+                    = 0.01650837                   
+                    
+## B. Isolates of Network
+\vspace{10pt}
+
+The isolates of this network are as follows : 
+```{r isolates, echo=FALSE}
+set.seed(1)
+isolates(gangs)
+```
+
+The number of isolates in this network are :
+```{r isolates2, echo=FALSE}
+set.seed(1)
+length(isolates(gangs))
+```
+
+COMMENT:
+
+Thus without considering the isolates, this network has 67 - 18 = 49 non isolate nodes.
+
+
+## B. In & Out Degree Distribution
+
+The In & Out Degree Histogram Distribution is as below :
+
+\vspace{10pt}
+
+```{r histograms, echo=FALSE, fig.height=4, fig.width=6}
+set.seed(1)
+yd<-delete.vertices(y,which(degree(gangs)==0)) # Removing the isolates
+par(mfrow = c(1, 2))
+plot(main= "In Degree Distribution", xlab = "Node Number", ylab = "In-Degrees", degree(yd, cmode = "indegree"), type = 'h', lwd = 2)
+plot(main= "Out Degree Distribution",xlab = "Node Number", ylab = "Out-Degrees",degree(yd, cmode = "outdegree"), type = 'h', lwd = 2)
+```
+
+\vspace{10pt}
+
+COMMENT:
+
+From the histogram it can be inferred that criminals with nodes 22 & 42 have the highest In Degrees of 7 each and the same pair of criminals also have the highest Out Degrees of 8 & 9.
+Also note that we have removed isolates when plotting this graph, as isolates do not have an in degree or outdegree.
+
+## C. Geodesic Distribution
+
+\vspace{10pt}
+
+```{r geodesic, echo=FALSE, fig.height=4, fig.width=8}
+ynet <- as.network(gangs)
+image(x = 1:49, y = 1:49, 
+    z = geodist(yd)$gdist, xaxt = "n",  yaxt = "n", main = "Geodesic Distribution", xlab = "Node Number", ylab = "Node Number") # Finding geodesic distance between vertices
+axis(side = 1, at = 1:49, cex.axis = 1.0)
+axis(side = 2, at = 1:49, cex.axis = 1.0)
+```
+
+\vspace{10pt}
+
+COMMENT :
+
+A geodesic image shows a relative colour patter depending on the no of egdes between the shortest path connecting a pair of nodes. A darker shade usually indicates a larger no of nodes between the nodes while a lighter shade indicates the opposite. 
+
+INTERPRETATION:
+
+The geodesic image shows that the shortest path between Nodes 29 & 26 has the highest no of edges, similarly for those between 26 & 36. Intuitively, the shortest path having the least no of edges would be from each node to itself, thus has geodesic distance of zero. Additionally the largest geodesic distance is found to be 5.
+
+The maximum geodesic distance is alternatively calculated with the following R code:
+
+```{r geodesic2, echo=TRUE}
+lc<- component.largest(yd, result="graph")
+gd<- geodist(lc)
+max(gd$gdist)
+```
+
+The minimum geodesic distance is alternatively calculated with the following R code :
+
+```{r geodesic3, echo=TRUE}
+lc<- component.largest(yd, result="graph")
+gd<- geodist(lc)
+min(gd$gdist)
+```
+
+
+## D. Betweenness 
+
+The Betweenness Centrality Measure histogram distibution of the network is as below:
+
+\vspace{10pt}
+```{r Betweeness,echo=FALSE}
+plot(betweenness(yd) ,main= "Betweenness Centrality Measure", xlab = "Node Number",ylab = "Betweenness Measure", 
+     type = 'h', lwd = 2)
+```
+
+\vspace{10pt}
+The corresponding Betweeness centrality matrix is as follows :
+
+```{r Betweeness2,echo=FALSE}
+betweenness(yd, gmode ="digraph")
+```
+
+
+
+COMMENT :
+
+The betweenness histogram shows that the node 22 has the highest betweeness measure of 353.16667 followed by node 42 with betweeness measure of 289.83333, while the node 10 have the lowest non zero measure of 3. 
+
+INTERPRETATION:
+
+Nodes 22 and 42, with high betweeness measure, act as 'bridges' in this network. They have the highest no of geodesics passing through them and hence are in a position to influence the flow around the system. The opposite can be said about node 10. 
+
+## E. Eigen Values
+
+
+The Eigen Value Centrality Measure histogram distribution of the network is as below:
+
+\vspace{10pt}
+```{r Eigen1,echo=FALSE}
+plot(evcent(as.network(yd[,],directed = FALSE)), main =" Eigen Value Centrality Measure",ylab= "Eigen Vector Centrality",xlab = "Node Number", type = 'h', lwd = 2)
+
+```
+\vspace{10pt}
+
+
+The corresponding Eigen Value Centrality matrix is as follows :
+
+```{r Eigen2,echo=FALSE}
+
+evcent(as.network(yd[,],directed = FALSE))
+```
+
+COMMENT:
+
+Both the graph and matrix shows that node 22 has the highest Eigen Value Centrality Measure of 0.55646 while the nodes 28 & 34 have the lowest (non zero) Eigen Value Centrality Measure of 0.002702164.
+
+INTERPRETATION:
+
+Thus Node 22 can be considered to be have the highest influence within this network i.e. have many/or important nodes connected to it.The opposite can be said about nodes 28 & 34.
+
+## F. Clustering Coefficient
+
+
+The clustering coefficient of the network is given as follows :
+```{r Clustering,echo=FALSE}
+gtrans(yd[,],           # input the adjacency matrix
+       mode = "graph")
+```
+
+COMMENT & INTERPRETATION:
+
+Since the value of clustering coefficients always range between 0 & 1, one can infer that a value of 0.0429 as obtained above is a lower value, hence there is not much of clustering of nodes observed in this network.
+
+
+## G. Reciprocity
+
+The reciprocity measure of this a network for criminal nodes having the same nationality is given as below:
+
+```{r Reciprocity,echo=FALSE}
+unname(summary(gangs ~ mutual(same = 'nationality')) / # number of mutual edges
+       summary(gangs ~ edges))   # number of edges
+```
+
+COMMENT & INTERPRETATION :
+
+The value denotes that near to 19.17% of all nodes with same nationality have mutual ties between them.
+
+**************
+\newpage
+
+# VISUALIZATION
+
+
+## A. Network graph using the the “circle” layout
+
+\vspace{10pt}
+
+```{r Network Graph, echo=FALSE, fig.height=9, fig.width=9}
+set.seed(1)
+gplot(yd, ,main = "Gang Network in Circle Layout", displaylabels=TRUE,displayisolates=F,vertex.cex=1.2,edge.lwd=0.001,label.cex=0.7, mode = "circle", pad=0, label.col="darkblue")
+```
+
+
+
+## B. Network graph using the “fruchtermanreingold” layout : Node size as              function of In/Out Degree
+
+\vspace{10pt}
+
+```{r Network Graph2, echo=FALSE, fig.height=8, fig.width=8}
+set.seed(1)
+indeg <- degree(yd, cmode = "indegree")
+outdeg<- degree(yd, cmode = "outdegree") 
+op <- par(mar = c(0,7,1,5),mfrow=c(2.6,1))
+plot(yd,mode = "fruchtermanreingold",displaylabels=TRUE,edge.lwd=0.00001,label.cex=0.7,vertex.cex=indeg,pad=0, main="In-Degree Network",label.col="darkblue" )
+plot(yd,mode = "fruchtermanreingold",displaylabels=TRUE,edge.lwd=0.00001,label.cex=0.7,vertex.cex=outdeg,pad=0, main="Out-Degree Network",label.col="darkblue" )
+```
+
+
+
+## C. Network graph using the “kamadakawai” layout : Node colour as function of        Role
+
+\vspace{10pt}
+
+```{r Network Graph3, echo=FALSE, fig.height=8, fig.width=8}
+my_colour <- hcl.colors(4, "Red-Green")
+set.seed(1)
+plot(yd,main="Gang Network based on Role of Members",mode = "kamadakawai",edge.lwd=0.001,vertex.cex=1.3,pad=0,vertex.col=my_colour[yd %v% "role"],displaylabels=TRUE,label.cex=0.7)
+legend("right",legend=sort(unique(yd %v% "role")),col=my_colour,pch=19,bty="n",pt.cex=1.5,title="Gang Member's Role")
+
+```
+
+
+
+## C. Network graph using the “kamadakawai” layout : Node colour as function of        Nationality
+
+\vspace{10pt}
+
+```{r Network Graph4, echo=FALSE, fig.height=8, fig.width=8}
+my_colour <- hcl.colors(4, "Green-Orange")
+set.seed(1)
+plot(yd,main="Gang Network based on Nationality of Members",mode = "kamadakawai",edge.lwd=0.001,vertex.cex=1.3,pad=0,vertex.col=my_colour[yd %v% "nationality"],displaylabels=TRUE,label.cex=0.7)
+
+legend("right",legend=sort(unique(yd %v% "nationality")),col=my_colour,pch=19,bty="n",pt.cex=1.2,title="Gang Member's Nationality")
+
+```
+
+
+
+
+
+
+## C. Network graph using the “kamadakawai” layout: Node colour as function of Sex
+
+\vspace{10pt}
+
+```{r Network Graph5, echo=FALSE, fig.height=8, fig.width=8}
+my_colour <- hcl.colors(3, "Blue-Red 2")
+set.seed(1)
+plot(yd,main="Gang Network based on Sex of Members",mode = "kamadakawai",edge.lwd=0.001,vertex.cex=1.3,pad=0,vertex.col=my_colour[yd %v% "sex"],displaylabels=TRUE,label.cex=0.7)
+
+legend("right",legend=sort(unique(ynet %v% "sex")),col=my_colour,pch=19,bty="n",pt.cex=1.2,title="Gang Member's Sex")
+```
+
+**************************************
+\newpage
+
+# MODELLING
+
+## A. ERGM Model
+
+## 1. Edge Density Only Model (Baseline Model)
+
+```{r Modelling, echo=FALSE}
+set.seed(1)
+m0 <- ynet ~ edges                     
+m0.MLE <- ergm(m0)
+summary(m0.MLE)
+```
+
+DESCRIPTION:
+\vspace{10pt}
+
+The log-odds of any edge occurring in this model is:
+
+= -4.087 × change in the number of edge 
+
+= -4.087 × 1 (since every new edge added to the model increases the number of edge 1 )
+
+The corresponding probability of an edge is :
+
+= exp(-4.087)/(1+exp(-4.087))
+
+=.0165 (which is the just the density of the network) 
+
+\vspace{10pt}
+RESULT & INTERPRETATION:
+\vspace{10pt}
+
+• Thus the log-odds of any edge existing in the gangs network is -4.087 and reaffirms the density value we obtained from the summary statistics. 
+
+
+• Thus the probability of any edge existing in the gangs network is .0165
+\vspace{10pt}
+
+FACT:
+\vspace{10pt}
+
+The AIC value for this base model is 649.6. 
+
+
+# 2. Edge Density + Reciprocity + Reciprocity between nodes with same role + Homophily between nodes with same nationality
+
+```{r Modelling3, echo=FALSE, fig.height=8, fig.width=8}
+set.seed(1)
+m1 <- ynet ~ edges + mutual + mutual(same ='role') + nodematch('nationality')             
+m1.MLE <- ergm(m1)
+summary(m1.MLE)
+```
+
+DESCRIPTION :
+\vspace{10pt}
+
+Conditional log-odds of two nodes forming a edge is:
+
+-5.6135 × (change in the number of edges) + 4.6335 × (change in number of mutual edges) + -2.4263 × (change in number of mutual edges among nodes with same role) + 1.9752 × (change in number of edges between nodes with same nationality)
+
+The corresponding probability is :
+
+= exp(conditional log odds)/(1+exp(conditional log odds))
+
+
+\vspace{10pt}
+RESULT :
+
+\vspace{10pt}
+
+• If an added edge will not create a mutual edge nor a mutual edge between nodes with same role nor an edge between nodes of same nationality, the log-odds is: -5.6135 
+
+The probability = exp(-5.6135)/(1+exp(-5.6135)) 
+                = 0.003635016 (which is the density of this model)
+
+• If an added edge will create a mutual edge but not a mutual edge between nodes with same role or an edge between nodes of same nationality, the log-odds is: -5.6135 + 4.6335 = -0.98 
+
+The probability is = exp(-0.98)/(1+exp(-0.98)) 
+                   = 0.2728918
+
+• If an added edge will only create a mutual edge between nodes with same role but not any other mutual edge or an edge between nodes of same nationality, the log-odds is: -5.6135 - 2.4263 = -8.0398 
+
+The probability is = exp(-8.0398)/(1+exp(-8.0398))
+                   = 0.0003222695
+
+• If an added edge will create an edge between nodes of same nationality but not any mutual edge or a mutual edge between nodes with same role, the log-odds is: -5.6135 - 1.9752 = -7.5887 
+
+The probability is = exp(-7.5887)/(1+exp(-7.5887))
+                   = 0.0005058826
+
+• If an added edge will create a mutual edge, specifically a mutual edge between nodes with same role but not an edge between nodes of same nationality, the log-odds is: -5.6135 + 4.6335 - 2.4263 = -3.4063 
+
+The probability is = exp(-3.4063)/(1+exp(-3.4063))
+                   = 0.03209915
+
+• If an added edge will create a mutual edge and an edge between nodes of same nationality but not a mutual edge between nodes with same role , the log-odds is: -5.6135 + 4.6335 - 1.9752 = -2.9552 
+
+The probability is = exp(-2.9552)/(1+exp(-2.9552))
+                   = 0.06918992
+
+• If an added edge will create a mutual edge between nodes with same role and an edge between nodes of same nationality but not any other mutual edge, the log-odds is: -5.6135 - 2.4263 - 1.9752 = -10.015 
+
+The probability is = exp(-10.015)/(1+exp(-10.015))
+                   = 4.472201e-05
+
+• If an added edge will simultaneously create a mutual edge, mutual edge between nodes with same role and an edge between nodes of same nationality, the log-odds is: -5.6135 + 4.6335 - 2.4263 - 1.9752 = -5.3815 
+
+The probability is = exp(-10.015)/(1+exp(-10.015))
+                   = 0.004579844
+
+\vspace{10pt}
+
+INTERPRETATION : 
+\vspace{10pt}
+
+• The density of this model is given by 0.003635016. 
+
+• Much of the density is captured by mutual edges hence reflecting higher probability (0.272898) for an added edge to have reciprocity.
+
+• Some of the density is captured by mutual edges which are between nodes of same nationality hence reflecting slightly higher probability of 0.06918992.
+
+• Some of the density is captured by mutual edges between nodes of same role hence reflecting slightly higher probability of 0.03209915.
+
+• Based on the probability values obtained, a significantly lower portion of the density accounts for an added edge that will be a mutual edge between nodes of same role and edge between nodes of same nationality. 
+
+• Based on the probability values obtained, a significantly lower portion of the density accounts for an added edge that will be a mutual edge between nodes of same role and edge between nodes of same nationality.
+
+• Based on the probability values obtained, a significantly lower portion of the density accounts for an added edge that will be a mutual edge between nodes of same role.
+
+• Based on the probability values obtained, a significantly lower portion of the density accounts for an added edge that will be an edge between nodes of same nationality.
+
+\vspace{10pt}
+
+FACT:
+\vspace{10pt}
+Also the AIC value for this base model is 563.8 indicating that this is a better model compared to the baseline model.
+
+
+# B. Goodness of Fit
+
+```{r GOF, echo=FALSE}
+set.seed(1)
+gof(m1.MLE)
+```
+
+\vspace{10pt}
+
+DESCRIPTION : 
+
+The simulation of the possible networks gives a sample statistical distribution. It thus necessitates us to conduct a hypothesis test to understand how confident we can be about the statistics obtained from the distribution.
+
+The Null Hypothesis : The simulated network attribute is same as the original network attribute.
+
+Alternate Hypothesis : The simulated network attribute is not the same as the original network attribute. 
+
+We reject the Null Hypothesis when we have evidence of a low p value i.e. when the mean of the simulated values differs a lot from that of the original network.
+
+\vspace{10pt}
+
+INTERPRETATION :
+\vspace{10pt}
+
+
+A. In-degree of nodes simulations  
+
+• It is noted that in all of the simulations, in-degree values of 5 & 6 are seen in a number of nodes much close to that found in the original observed network. This is evidenced by the near perfect high p values(=1.00), which indicates that we fail to reject the Null Hypothesis and conclude that in-degree of 5 & 6's in the original observed network are sufficently captured in the nodes of the simulated network.
+
+• Similarly, in-degree value of 2 and to a slightly lesser extent, that of 3 & 4 are also seen in a number of nodes (of the simulated network) close to that found in the original observed network. Again this is evidenced by slightly high p values.
+
+• However, nodes having in-degree value of 7 in the orginal network are not captured in most of the simulations, since the p value for that parameter = 0.00.
+
+• Similarly, number of simulated nodes having in-degree value of 0 & 1 are also not much similar to that found in the original network.
+
+\vspace{20pt}
+
+B. Out-degree of nodes simulations  
+
+• It is noted that in all of the simulations, out-degree values of 3,5,6 & 7 are seen in a number of nodes much close to that found in the original observed network. This is evidenced by the near perfect high p values(=1.00), which indicates that we fail to reject the Null Hypothesis and conclude that out-degree of 3,5,6 & 7's in the original observed network are sufficently captured in the nodes of the simulated network.
+
+• Similarly, out-degree value of 4 and to a slightly lesser extent, that of 0 & 1 are also seen in a number of nodes (of the simulated network) close to that found in the original observed network. Again this is evidenced by slightly high p values.
+
+• However, nodes having out-degree value of 8 & 9 in the orginal network are not captured in most of the simulations, since the p value for those parameters are 0.00.
+
+• Similarly, the number of simulated nodes having out-degree value of 2 are not much similar to that found in the original network.
+
+\vspace{20pt}
+
+C. Edgewise shared partner simulations  
+
+• It is noted that in all of the simulations, nodes having 2 shared partners are seen in a number of simulated nodes closest to that found in the original network. This is evidenced by the near perfect high p values(=1.00), which indicates that we fail to reject the Null Hypothesis and conclude that number of nodes with 2 shared partner in the original network are sufficently captured in the simulations.
+
+• Similarly, nodes having 0 shared partners are also seen in a number of simulated nodes closer to that found in the original network. Again this is evidenced by higher p values.
+
+• However, nodes having 1 shared partner are seen in fewer nodes than that seen in the observed network, evidenced by the low p values (=0.16).
+
+\vspace{20pt}
+
+D. Minimum geodesic distance of nodes simulations
+
+• It is noted that in all of the simulations, minimum geodesic distances ranging from 11 to 21 as well as 1 are seen in a number of nodes much close to that found in the original observed network. This is evidenced by the near perfect high p values(=1.00), which indicates that we fail to reject the Null Hypothesis and conclude that above minimum geodesic distances in the original observed network are sufficently captured in the nodes of the simulated network.
+
+• Similarly, minimum geodesic distance of 9,8 & 10 and to a slightly lesser extent, that of 7,6,5, 4 and even infinity are also seen across a number of nodes (of the simulated network) close to that found in the original observed network. Again this is evidenced by slightly high p values.
+
+• However, minimum geodesic distance of 2 in the orginal network are not captured in most of the simulations, since the p value for that parameter is 0.02.
+
+• Similarly, number of nodes having a minimum geodesic distance of 3 are also not much similar to that found in the original network, owing to the low p value of 0.16.
+
+\vspace{20pt}
+
+E. Model statistics simulations
+
+• It is noted that in all of the simulations, number of edges is very similar to that found in the original observed network. This is evidenced by the near perfect high p values(=1.00), which indicates that we fail to reject the Null Hypothesis and conclude that edges in the original observed network are sufficently captured in the simulated network.
+
+• The situation is very similar for reciprocity & reciprocity between nodes having same role, where the prefect high p values(=1.00), suggest that the simulations almost always capture both these effects between the nodes.
+
+• Like wise homophily between nodes of same nationality is also captured well by the simulated networks.  
